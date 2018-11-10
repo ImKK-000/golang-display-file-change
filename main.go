@@ -2,17 +2,29 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"io/ioutil"
+	"path"
 )
 
-func main() {
-	var saveFileUnixTime int64
-	for {
-		f1, _ := os.Stat("file.1")
-		f1UnixTime := f1.ModTime().Unix()
-		if saveFileUnixTime != f1UnixTime {
-			saveFileUnixTime = f1UnixTime
-			fmt.Println(f1.Name(), saveFileUnixTime)
+var ignoreFile = map[string]bool{}
+
+func WalkInDirectories(pathFile string) {
+	files, _ := ioutil.ReadDir(pathFile)
+	for _, file := range files {
+		if ignoreFile[file.Name()] {
+			continue
+		}
+		if file.IsDir() {
+			fmt.Println(file.Name(), file.Size(), file.ModTime().Unix())
+			WalkInDirectories(path.Join(pathFile, file.Name()))
 		}
 	}
+}
+
+func main() {
+	// ignore files
+	ignoreFile[".git"] = true
+
+	// start to walk directory from current path
+	WalkInDirectories(path.Dir(""))
 }
